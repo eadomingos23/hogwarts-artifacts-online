@@ -10,9 +10,10 @@ public class WizardToWizardDtoConverter implements Converter<Wizard, WizardDto> 
 
     @Override
     public WizardDto convert(Wizard source) {
-        return new WizardDto(
-                source.getId(),
-                source.getName()
-        );
+        WizardDto wizardDto = new WizardDto(source.getId(),
+                source.getName(),
+                source.getNumberOfArtifacts());
+        return wizardDto;
     }
+
 }

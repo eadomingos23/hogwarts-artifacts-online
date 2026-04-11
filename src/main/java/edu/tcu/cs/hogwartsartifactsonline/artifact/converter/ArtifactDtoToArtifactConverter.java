@@ -18,5 +18,4 @@ public class ArtifactDtoToArtifactConverter implements Converter<ArtifactDto, Ar
         return artifact;
     }
 
-
 }
