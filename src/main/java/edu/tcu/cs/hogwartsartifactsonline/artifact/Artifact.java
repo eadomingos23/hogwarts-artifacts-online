@@ -1,112 +1,69 @@
 package edu.tcu.cs.hogwartsartifactsonline.artifact;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import edu.tcu.cs.hogwartsartifactsonline.artifact.converter.ArtifactDtoToArtifactConverter;
-import edu.tcu.cs.hogwartsartifactsonline.artifact.converter.ArtifactToArtifactDtoConverter;
-import edu.tcu.cs.hogwartsartifactsonline.artifact.dto.ArtifactDto;
-import edu.tcu.cs.hogwartsartifactsonline.client.imagestorage.ImageStorageClient;
-import edu.tcu.cs.hogwartsartifactsonline.system.Result;
-import edu.tcu.cs.hogwartsartifactsonline.system.StatusCode;
-import io.micrometer.core.instrument.MeterRegistry;
-import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import edu.tcu.cs.hogwartsartifactsonline.wizard.Wizard;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.io.Serializable;
 
-@RestController
-@RequestMapping("${api.endpoint.base-url}/artifacts")
-public class ArtifactController {
+@Entity
+public class Artifact implements Serializable {
 
-    private final ArtifactService artifactService;
+    @Id
+    private String id;
 
-    private final ArtifactToArtifactDtoConverter artifactToArtifactDtoConverter;
+    private String name;
 
-    private final ArtifactDtoToArtifactConverter artifactDtoToArtifactConverter;
+    private String description;
 
-    private final MeterRegistry meterRegistry;
+    private String imageUrl;
 
-    private final ImageStorageClient imageStorageClient;
+    @ManyToOne
+    private Wizard owner;
 
 
-    public ArtifactController(ArtifactService artifactService, ArtifactToArtifactDtoConverter artifactToArtifactDtoConverter, ArtifactDtoToArtifactConverter artifactDtoToArtifactConverter, MeterRegistry meterRegistry, ImageStorageClient imageStorageClient) {
-        this.artifactService = artifactService;
-        this.artifactToArtifactDtoConverter = artifactToArtifactDtoConverter;
-        this.artifactDtoToArtifactConverter = artifactDtoToArtifactConverter;
-        this.meterRegistry = meterRegistry;
-        this.imageStorageClient = imageStorageClient;
+    public Artifact() {
     }
 
-    @GetMapping("/{artifactId}")
-    public Result findArtifactById(@PathVariable String artifactId) {
-        Artifact foundArtifact = this.artifactService.findById(artifactId);
-        this.meterRegistry.counter("artifact.id." + artifactId).increment();
-        ArtifactDto artifactDto = this.artifactToArtifactDtoConverter.convert(foundArtifact);
-        return new Result(true, StatusCode.SUCCESS, "Find One Success", artifactDto);
+    public String getId() {
+        return id;
     }
 
-    @GetMapping
-    public Result findAllArtifacts(Pageable pageable) {
-        Page<Artifact> artifactPage = this.artifactService.findAll(pageable);
-        // Convert artifactPage to a page of artifactDtos
-        Page<ArtifactDto> artifactDtoPage = artifactPage
-                .map(this.artifactToArtifactDtoConverter::convert);
-        return new Result(true, StatusCode.SUCCESS, "Find All Success", artifactDtoPage);
+    public void setId(String id) {
+        this.id = id;
     }
 
-    @PostMapping
-    public Result addArtifact(@Valid @RequestBody ArtifactDto artifactDto) {
-        // Convert artifactDto to artifact
-        Artifact newArtifact = this.artifactDtoToArtifactConverter.convert(artifactDto);
-        Artifact savedArtifact = this.artifactService.save(newArtifact);
-        ArtifactDto savedArtifactDto = this.artifactToArtifactDtoConverter.convert(savedArtifact);
-        return new Result(true, StatusCode.SUCCESS, "Add Success", savedArtifactDto);
+    public String getName() {
+        return name;
     }
 
-    @PutMapping("/{artifactId}")
-    public Result updateArtifact(@PathVariable String artifactId, @Valid @RequestBody ArtifactDto artifactDto) {
-        Artifact update = this.artifactDtoToArtifactConverter.convert(artifactDto);
-        Artifact updatedArtifact = this.artifactService.update(artifactId, update);
-        ArtifactDto updatedArtifactDto = this.artifactToArtifactDtoConverter.convert(updatedArtifact);
-        return new Result(true, StatusCode.SUCCESS, "Update Success", updatedArtifactDto);
+    public void setName(String name) {
+        this.name = name;
     }
 
-    @DeleteMapping("/{artifactId}")
-    public Result deleteArtifact(@PathVariable String artifactId) {
-        this.artifactService.delete(artifactId);
-        return new Result(true, StatusCode.SUCCESS, "Delete Success");
+    public String getDescription() {
+        return description;
     }
 
-    @GetMapping("/summary")
-    public Result summarizeArtifacts() throws JsonProcessingException {
-        List<Artifact> foundArtifacts = this.artifactService.findAll();
-        // Convert foundArtifacts to a list of artifactDtos
-        List<ArtifactDto> artifactDtos = foundArtifacts.stream()
-                .map(this.artifactToArtifactDtoConverter::convert)
-                .collect(Collectors.toList());
-        String artifactSummary = this.artifactService.summarize(artifactDtos);
-        return new Result(true, StatusCode.SUCCESS, "Summarize Success", artifactSummary);
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    @PostMapping("/search")
-    public Result findArtifactsByCriteria(@RequestBody Map<String, String> searchCriteria, Pageable pageable) {
-        Page<Artifact> artifactPage = this.artifactService.findByCriteria(searchCriteria, pageable);
-        Page<ArtifactDto> artifactDtoPage = artifactPage.map(this.artifactToArtifactDtoConverter::convert);
-        return new Result(true, StatusCode.SUCCESS, "Search Success", artifactDtoPage);
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    @PostMapping("/images")
-    public Result uploadImage(@RequestParam String containerName, @RequestParam MultipartFile file) throws IOException {
-        try (InputStream inputStream = file.getInputStream()) {
-            String imageUrl = this.imageStorageClient.uploadImage(containerName, file.getOriginalFilename(), inputStream, file.getSize());
-            return new Result(true, StatusCode.SUCCESS, "Upload Image Success", imageUrl);
-        }
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public Wizard getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Wizard owner) {
+        this.owner = owner;
     }
 
 }
