@@ -22,11 +22,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-// For JUnit 5, we need to use @ExtendWith.
 @ExtendWith(MockitoExtension.class)
 class ArtifactServiceTest {
 
-    @Mock // @Mock defines a Mockito mock object for ArtifactRepository.
+    @Mock
     ArtifactRepository artifactRepository;
 
     @Mock
@@ -226,8 +225,8 @@ class ArtifactServiceTest {
             this.artifactService.delete("1250808601744904192");
         });
 
+
         // Then
         verify(this.artifactRepository, times(1)).findById("1250808601744904192");
     }
-
 }
