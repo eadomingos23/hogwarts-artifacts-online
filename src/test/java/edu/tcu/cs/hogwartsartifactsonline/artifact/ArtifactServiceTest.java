@@ -225,8 +225,8 @@ class ArtifactServiceTest {
             this.artifactService.delete("1250808601744904192");
         });
 
+
         // Then
         verify(this.artifactRepository, times(1)).findById("1250808601744904192");
     }
-
 }
