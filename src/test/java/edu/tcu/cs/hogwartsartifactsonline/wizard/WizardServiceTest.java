@@ -11,7 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +23,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles(value = "dev")
 class WizardServiceTest {
 
     @Mock
@@ -229,7 +227,6 @@ class WizardServiceTest {
         assertThat(w3.getArtifacts()).contains(a);
     }
 
-
     @Test
     void testAssignArtifactErrorWithNonExistentWizardId() {
         // Given
@@ -259,17 +256,16 @@ class WizardServiceTest {
         assertThat(a.getOwner().getId()).isEqualTo(2);
     }
 
-
-
     @Test
     void testAssignArtifactErrorWithNonExistentArtifactId() {
         // Given
         given(this.artifactRepository.findById("1250808601744904192")).willReturn(Optional.empty());
-        // When
 
+        // When
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
             this.wizardService.assignArtifact(3, "1250808601744904192");
         });
+
         // Then
         assertThat(thrown)
                 .isInstanceOf(ObjectNotFoundException.class)
