@@ -227,6 +227,7 @@ class WizardControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 
+
     @Test
     @DisplayName("Check assignArtifact with non-existent artifact id (PUT)")
     void testAssignArtifactErrorWithNonExistentArtifactId() throws Exception {
